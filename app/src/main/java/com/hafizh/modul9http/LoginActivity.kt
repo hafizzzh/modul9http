@@ -4,6 +4,13 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.widget.TextView
+import com.github.kittinunf.fuel.Fuel
+import com.github.kittinunf.fuel.core.FuelError
+import com.github.kittinunf.fuel.core.Headers
+import com.github.kittinunf.fuel.core.Request
+import com.github.kittinunf.fuel.core.Response
+import com.github.kittinunf.fuel.httpGet
+import com.github.kittinunf.result.Result
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputLayout
 import java.io.BufferedReader
@@ -35,40 +42,24 @@ class LoginActivity : AppCompatActivity() {
                 password = inputPassword.editText?.text.toString()
             )
         }
-
-
     }
 
     private fun loginn(userName: String, password: String) {
-        val client =
-    }
-
-
-    private fun doRequest(userName: String, password: String) {
-        var reqParam = URLEncoder.encode("email", "UTF-8") + "=" + URLEncoder.encode(userName, "UTF-8")
-        reqParam += "&" + URLEncoder.encode("password", "UTF-8") + "=" + URLEncoder.encode(password, "UTF-8")
-
-        val mURL = URL(mUrl+"login?"+reqParam)
-
-        with(mURL.openConnection() as HttpURLConnection) {
-            // optional default is GET
-            requestMethod = "GET"
-
-            Log.e("URL", url.toString())
-            Log.e("RESPONSE", responseCode.toString())
-
-            BufferedReader(InputStreamReader(inputStream)).use {
-                val response = StringBuffer()
-
-                var inputLine = it.readLine()
-                while (inputLine != null) {
-                    response.append(inputLine)
-                    inputLine = it.readLine()
+        "${mUrl}login?email=${userName}&password=${password}"
+            .httpGet()
+            .responseString { request: Request, response: Response, result: Result<String, FuelError> ->
+                when (result) {
+                    is Result.Success -> {
+                        Log.e("RESPONSE", response.toString())
+                        tvResponse.text = response.body()
+                            .asString(response.get(Headers.CONTENT_TYPE).lastOrNull())
+                    }
+                    is Result.Failure -> {
+                        Log.e("FAILURE", response.toString())
+                        tvResponse.text = response.body()
+                            .asString(response.get(Headers.CONTENT_TYPE).lastOrNull())
+                    }
                 }
-                it.close()
-                tvResponse.text = response
-                println("Response : $response")
             }
-        }
     }
 }
